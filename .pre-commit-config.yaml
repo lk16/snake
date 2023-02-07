@@ -1,0 +1,58 @@
+repos:
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v1.2.0
+    hooks:
+      - id: pycln
+        args: [--config=pyproject.toml]
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-broken-line
+          - flake8-builtins
+          - flake8-comprehensions
+          - flake8-eradicate
+          - flake8-quotes
+          - flake8-tidy-imports
+          - pep8-naming
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.6.4
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-yaml
+      - id: check-json
+        exclude: 'aaa-vscode-extension/.*'
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  - repo: local
+    hooks:
+    - id: mypy
+      name: run mypy
+      language: system
+      entry: mypy --strict
+      types: [python]
+
+
+  - repo: https://github.com/lk16/detect-missing-init
+    rev: v0.1.1
+    hooks:
+    - id: detect-mising-init
+      args: ['--create', "--track"]

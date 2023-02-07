@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "chessbot"
+version = "0.1.0"
+description = ""
+authors = ["Luuk Verweij"]
+license = "BSD"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.961"
+pre-commit = "^3.0.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
