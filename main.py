@@ -9,6 +9,7 @@ import queue
 
 
 key_press_queue: queue.Queue["Direction"] = queue.Queue()
+quit_listening_queue: queue.Queue[None] = queue.Queue()
 
 
 class GameOver(Exception):
@@ -31,41 +32,46 @@ class Coordinate:
         return hash((self.x, self.y))
 
 
-def wait_for_key() -> Direction:
-    old_settings = termios.tcgetattr(sys.stdin)
+def wait_for_key() -> Optional[Direction]:
     tty.setcbreak(sys.stdin.fileno())
 
+    b = os.read(sys.stdin.fileno(), 3).decode()
+
+    if len(b) == 3:
+        k = ord(b[2])
+    else:
+        k = ord(b)
+
+    key_mapping = {
+        65: Direction.UP,
+        66: Direction.DOWN,
+        67: Direction.RIGHT,
+        68: Direction.LEFT,
+    }
+
     try:
-        while True:
-            b = os.read(sys.stdin.fileno(), 3).decode()
-
-            if len(b) == 3:
-                k = ord(b[2])
-            else:
-                k = ord(b)
-
-            key_mapping = {
-                65: Direction.UP,
-                66: Direction.DOWN,
-                67: Direction.RIGHT,
-                68: Direction.LEFT,
-            }
-
-            try:
-                return key_mapping[k]
-            except KeyError:
-                # Ignore other keypresses
-                print(f"Ignoring keypress {chr(k)}")
-
-    finally:
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        return key_mapping[k]
+    except KeyError:
+        # Ignore other keypresses
+        print(f"Ignoring keypress {chr(k)}")
+        return None
 
 
 def wait_for_key_loop() -> NoReturn:
-    while True:
-        direction = wait_for_key()
-        key_press_queue.put(direction)
+    try:
+        while True:
+            try:
+                quit_listening_queue.get(block=False)
+            except queue.Empty:
+                pass
+            else:
+                break
 
+            direction = wait_for_key()
+            if direction is not None:
+                key_press_queue.put(direction)
+    finally:
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
 @dataclass
 class Snake:
@@ -150,7 +156,7 @@ class GameState:
 
         self.food = self.get_new_food_coordinate()
 
-    def get_new_food_coordinate(self) -> None:
+    def get_new_food_coordinate(self) -> Coordinate:
         while True:
             x = randint(0, self.width - 1)
             y = randint(0, self.height - 1)
@@ -197,6 +203,8 @@ class GameState:
 
 
 if __name__ == "__main__":
+    old_settings = termios.tcgetattr(sys.stdin)
+
     thread = Thread(target=wait_for_key_loop)
     thread.start()
 
@@ -214,7 +222,8 @@ if __name__ == "__main__":
         game_state.show()
 
 
-    # TODO exit program more nicely
-    old_settings = termios.tcgetattr(sys.stdin)
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+    quit_listening_queue.put(None)
+    thread.join()
+
+    # termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
     exit(0)
