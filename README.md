@@ -1,4 +1,4 @@
-# Chess bot
+# Snake game
 
 In this repo we create a snake game. This is a project that is developed on my [twitch stream](https://twitch.tv/thebigmerp).
 
